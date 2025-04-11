@@ -20,6 +20,9 @@ class MainWindow(QMainWindow):
         self.current_target_label = None
         self.df = None
         self.current_row = 0
+        self.automate_activated = False
+        self.scanning_point_start = 0.0
+        self.scanning_point_end = 0, 0
 
         self.plot_frame = self.findChild(MatplotlibWidget, "plotwidget")  
 
@@ -29,12 +32,58 @@ class MainWindow(QMainWindow):
         self.backbtn.clicked.connect(self.show_previous_row)
         self.resetbtn.clicked.connect(self.reset_all)  
         self.undobtn.clicked.connect(self.reset_plot)
+        self.startbtn.clicked.connect(self.activate_automate)
         self.plotrowbtn.clicked.connect(self.plot_specific_row)  
         self.savedatabtn.clicked.connect(self.save_data)
         self.maximumheightbtn.clicked.connect(self.activate_maximum_btn)
         self.minimumheightbtn.clicked.connect(self.activate_minimum_btn)
         self.plot_frame.plot_clicked.connect(self.update_label)
         self.setup_map(0,0)
+
+    def activate_automate(self):
+        if self.df is not None:
+            self.automate_activated = True
+            self.scanning_point_start = int(self.start_line_edit.text()) 
+            self.scanning_point_end = int(self.end_line_edit.text())
+
+            self.get_row(self.current_row)
+
+
+    def calculate_automate_markers(self, row_index, scanning_point_start, scanning_point_end):
+        if self.df is not None:
+            row_data = self.df.iloc[row_index]
+            fields = [f"field{i}" for i in range(scanning_point_start, scanning_point_end + 1)]  
+            row_data_filtered = row_data[fields]
+
+            try:
+                max_value = row_data_filtered.max()
+                min_value = row_data_filtered.min()
+
+                max_index = row_data_filtered.idxmax()
+                min_index = row_data_filtered.idxmin()
+
+                # self.plot_frame.add_marker(max_index, max_value, color='#0000FF', label_text='Max')
+                # self.plot_frame.add_marker(min_index, min_value, color='#FF8C00', label_text='Min')
+
+                self.plot_frame.add_marker(max_index, max_value, color='#0000FF')
+                self.plot_frame.add_marker(min_index, min_value, color='#FF8C00')
+
+
+                self.y_data_1 = max_value
+                self.y_data_2 = min_value
+
+                difference = max_value - min_value
+                self.max_automate.setText(f"{max_value}")
+                self.min_automate.setText(f"{min_value}")
+                self.total_automate.setText(f"{difference}")
+
+            except Exception as e:
+                QMessageBox.warning(self, "Error", f"Failed to calculate markers:\n{str(e)}")
+
+       
+
+            
+                     
 
     def activate_maximum_btn(self):
         self.current_target_label = self.maxheightvalue  
@@ -208,16 +257,19 @@ class MainWindow(QMainWindow):
             row_data_filtered = row_data[fields]  
             self.plot_frame.plot_csv(row_data_filtered)
 
+
             try:
+                if self.automate_activated is not False:
+                    self.calculate_automate_markers(row_index, self.scanning_point_start, self.scanning_point_end)
+            except:
                 if self.y_data_1 is not None or self.y_data_2 is not None:
                     self.reset_plot()
-            except:
-                QMessageBox.warning(self, "Invalid Input", "Failed to reset to the first row.")
+
+                if row_index == 0:
+                    self.setup_map(latitude, longitude)  
+                else:
+                    self.update_map_with_gps(latitude, longitude)
             
-            if row_index == 0:
-                self.setup_map(latitude, longitude)  
-            else:
-                self.update_map_with_gps(latitude, longitude)
         else:
             QMessageBox.information(self, "End of Data", "No more rows to display.")
 

@@ -22,6 +22,7 @@ class MatplotlibWidget(QWidget):
         self.previous_y = None
         self.drag_factor = 0.0001
         self.drag_mode = "both"
+        self.marker_artists = []  
 
         
         self.canvas.mpl_connect('button_press_event', self.on_click)
@@ -30,6 +31,33 @@ class MatplotlibWidget(QWidget):
         self.canvas.mpl_connect('motion_notify_event', self.on_motion)
         self.canvas.mpl_connect('button_release_event', self.on_release)
 
+    # def add_marker(self, x_data, y_data, color='red', label_text=None):
+    #     marker, = self.ax.plot(x_data, y_data, marker='o', color=color)
+
+    #     if label_text:
+    #         label = self.ax.annotate(label_text, (x_data, y_data),
+    #                                 textcoords="offset points",
+    #                                 xytext=(5, 5),
+    #                                 ha='left',
+    #                                 fontsize=9,
+    #                                 color=color,
+    #                                 bbox=dict(boxstyle="round,pad=0.2", fc="white", ec=color, lw=1))
+    #     else:
+    #         label = None
+
+    #     self.marker_artists.append((marker, label))
+
+    #     self.canvas.draw()
+
+    def add_marker(self, x_data, y_data, color='red'):
+        marker, = self.ax.plot(x_data, y_data, marker='o', color=color)
+
+        self.marker_artists.append((marker))
+
+        self.canvas.draw()
+
+
+    
     def plot_csv(self, data):
         self.canvas.figure.clear()
         self.ax = self.canvas.figure.subplots()

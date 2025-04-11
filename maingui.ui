@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1138</width>
-    <height>818</height>
+    <height>896</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -59,7 +59,7 @@ QPushButton {
 	background-color: rgb(198, 70, 0);
 }
 
-#backbtn:hover, #nextbtn:hover, #plotrowbtn:hover, #resetbtn:hover, #undobtn:hover, #savedatabtn:hover {
+#backbtn:hover, #nextbtn:hover, #plotrowbtn:hover, #resetbtn:hover, #undobtn:hover, #savedatabtn:hover, #startbtn:hover, #clearbtn:hover {
 	background-color: #FFFF01;
 	color: #000;
 }
@@ -580,6 +580,11 @@ QPushButton {
               <height>16777215</height>
              </size>
             </property>
+            <property name="font">
+             <font>
+              <pointsize>12</pointsize>
+             </font>
+            </property>
            </widget>
           </item>
           <item row="1" column="0">
@@ -608,10 +613,20 @@ QPushButton {
               <height>16777215</height>
              </size>
             </property>
+            <property name="font">
+             <font>
+              <pointsize>12</pointsize>
+             </font>
+            </property>
            </widget>
           </item>
           <item row="2" column="1">
-           <widget class="QLabel" name="label_9">
+           <widget class="QLabel" name="max_automate">
+            <property name="font">
+             <font>
+              <pointsize>12</pointsize>
+             </font>
+            </property>
             <property name="text">
              <string/>
             </property>
@@ -642,7 +657,12 @@ QPushButton {
            </widget>
           </item>
           <item row="3" column="1">
-           <widget class="QLabel" name="label_10">
+           <widget class="QLabel" name="min_automate">
+            <property name="font">
+             <font>
+              <pointsize>12</pointsize>
+             </font>
+            </property>
             <property name="text">
              <string/>
             </property>
@@ -661,7 +681,12 @@ QPushButton {
            </widget>
           </item>
           <item row="4" column="1">
-           <widget class="QLabel" name="label_11">
+           <widget class="QLabel" name="total_automate">
+            <property name="font">
+             <font>
+              <pointsize>12</pointsize>
+             </font>
+            </property>
             <property name="text">
              <string/>
             </property>
@@ -688,6 +713,54 @@ QPushButton {
             </property>
             <property name="text">
              <string>Maximum Height</string>
+            </property>
+           </widget>
+          </item>
+          <item row="5" column="0">
+           <widget class="QPushButton" name="startbtn">
+            <property name="minimumSize">
+             <size>
+              <width>125</width>
+              <height>25</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>125</width>
+              <height>25</height>
+             </size>
+            </property>
+            <property name="font">
+             <font>
+              <pointsize>12</pointsize>
+             </font>
+            </property>
+            <property name="text">
+             <string>Start</string>
+            </property>
+           </widget>
+          </item>
+          <item row="5" column="1">
+           <widget class="QPushButton" name="clearbtn">
+            <property name="minimumSize">
+             <size>
+              <width>125</width>
+              <height>25</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>125</width>
+              <height>25</height>
+             </size>
+            </property>
+            <property name="font">
+             <font>
+              <pointsize>12</pointsize>
+             </font>
+            </property>
+            <property name="text">
+             <string>Clear</string>
             </property>
            </widget>
           </item>
