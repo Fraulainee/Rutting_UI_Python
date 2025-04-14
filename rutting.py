@@ -1,4 +1,4 @@
-import sys, os, tempfile, folium, csv
+import sys, os, tempfile, folium, csv, re
 import pandas as pd
 from PyQt5 import uic
 from PyQt5.QtWidgets import QApplication, QMainWindow, QFileDialog, QMessageBox, QPushButton, QVBoxLayout, QWidget
@@ -32,6 +32,7 @@ class MainWindow(QMainWindow):
         self.backbtn.clicked.connect(self.show_previous_row)
         self.resetbtn.clicked.connect(self.reset_all)  
         self.undobtn.clicked.connect(self.reset_plot)
+        self.clearbtn.clicked.connect(self.reset_plot)
         self.startbtn.clicked.connect(self.activate_automate)
         self.plotrowbtn.clicked.connect(self.plot_specific_row)  
         self.savedatabtn.clicked.connect(self.save_data)
@@ -52,7 +53,7 @@ class MainWindow(QMainWindow):
     def calculate_automate_markers(self, row_index, scanning_point_start, scanning_point_end):
         if self.df is not None:
             row_data = self.df.iloc[row_index]
-            fields = [f"field{i}" for i in range(scanning_point_start, scanning_point_end + 1)]  
+            fields = [f"field{i}" for i in range(scanning_point_start, scanning_point_end + 1)] 
             row_data_filtered = row_data[fields]
 
             try:
@@ -61,6 +62,9 @@ class MainWindow(QMainWindow):
 
                 max_index = row_data_filtered.idxmax()
                 min_index = row_data_filtered.idxmin()
+                
+                max_index = int(max_index.replace("field", ""))
+                min_index = int(min_index.replace("field", ""))
 
                 # self.plot_frame.add_marker(max_index, max_value, color='#0000FF', label_text='Max')
                 # self.plot_frame.add_marker(min_index, min_value, color='#FF8C00', label_text='Min')
@@ -69,22 +73,15 @@ class MainWindow(QMainWindow):
                 self.plot_frame.add_marker(min_index, min_value, color='#FF8C00')
 
 
-                self.y_data_1 = max_value
-                self.y_data_2 = min_value
-
                 difference = max_value - min_value
-                self.max_automate.setText(f"{max_value}")
-                self.min_automate.setText(f"{min_value}")
-                self.total_automate.setText(f"{difference}")
+                self.max_automate.setText(f"{max_value:.3f}")
+                self.min_automate.setText(f"{min_value:.3f}")
+                self.total_automate.setText(f"{difference:.3f}")
 
             except Exception as e:
                 QMessageBox.warning(self, "Error", f"Failed to calculate markers:\n{str(e)}")
 
        
-
-            
-                     
-
     def activate_maximum_btn(self):
         self.current_target_label = self.maxheightvalue  
         self.plot_frame.activate_clicking()
@@ -117,7 +114,7 @@ class MainWindow(QMainWindow):
 
     def update_label(self, y_data):
         if self.current_target_label:
-            self.current_target_label.setText(f"{y_data}")
+            self.current_target_label.setText(f"{y_data:.3f}")
             
             if self.current_target_label == self.maxheightvalue:
                 self.y_data_1 = y_data
@@ -128,7 +125,7 @@ class MainWindow(QMainWindow):
 
             if self.y_data_1 is not None and self.y_data_2 is not None:
                 difference = (self.y_data_1 - self.y_data_2)
-                self.totdiffvalue.setText(f"{difference}")
+                self.totdiffvalue.setText(f"{difference:.3f}")
 
     def save_data(self):
         if self.df is None:
@@ -232,6 +229,16 @@ class MainWindow(QMainWindow):
             try:
                 self.reset_labels()
                 self.get_row(self.current_row)
+
+                if self.automate_activated:
+                    self.start_line_edit.clear()
+                    self.end_line_edit.clear()
+                    self.automate_activated = False
+                    self.scanning_point_start = 0.0
+                    self.scanning_point_end = 0.0
+                    self.max_automate.clear()
+                    self.min_automate.clear()
+                    self.total_automate.clear()
             except ValueError:
                 QMessageBox.warning(self, "Invalid Input", "Please enter a valid row number.")
 
@@ -258,17 +265,17 @@ class MainWindow(QMainWindow):
             self.plot_frame.plot_csv(row_data_filtered)
 
 
-            try:
-                if self.automate_activated is not False:
-                    self.calculate_automate_markers(row_index, self.scanning_point_start, self.scanning_point_end)
-            except:
-                if self.y_data_1 is not None or self.y_data_2 is not None:
-                    self.reset_plot()
+          
+            if self.automate_activated is not False:
+                self.calculate_automate_markers(row_index, self.scanning_point_start, self.scanning_point_end)
+        
+            if self.y_data_1 is not None or self.y_data_2 is not None:
+                self.reset_plot()
 
-                if row_index == 0:
-                    self.setup_map(latitude, longitude)  
-                else:
-                    self.update_map_with_gps(latitude, longitude)
+            if row_index == 0:
+                self.setup_map(latitude, longitude)  
+            else:
+                self.update_map_with_gps(latitude, longitude)
             
         else:
             QMessageBox.information(self, "End of Data", "No more rows to display.")
