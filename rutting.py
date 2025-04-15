@@ -21,10 +21,21 @@ class MainWindow(QMainWindow):
         self.df = None
         self.current_row = 0
         self.automate_activated = False
+
         self.scanning_point_start = 0.0
         self.scanning_point_end = 0, 0
+        self.automateMaxValue = []
+        self.automateMinValue = []
+        self.automateTotalDifference = []
+        self.automateLat = []
+        self.automateLong = []
 
         self.plot_frame = self.findChild(MatplotlibWidget, "plotwidget")  
+
+        self.progressBar.setMinimum(0)
+        self.progressBar.setMaximum(100)
+        self.progressBar.setValue(0)
+
 
         
         self.importcsvbtn.clicked.connect(self.import_csv)
@@ -46,6 +57,28 @@ class MainWindow(QMainWindow):
             self.automate_activated = True
             self.scanning_point_start = int(self.start_line_edit.text()) 
             self.scanning_point_end = int(self.end_line_edit.text())
+
+            self.maximum_height.setStyleSheet("""
+                QPushButton {
+                    background-color: #0000FF;  
+                    color: white;
+                }
+                QPushButton:hover {
+                    background-color: #5F9EA0;
+                }
+            """) 
+
+            self.minimum_height.setStyleSheet("""
+                QPushButton {
+                    background-color: #FF8C00;         self.progressBar.setMaximum(100)
+        self.progressBar.setValue(0)
+                    color: white;
+                }
+                QPushButton:hover {
+                    background-color: #FFA500;
+                }
+            """)
+
 
             self.get_row(self.current_row)
 
@@ -72,11 +105,14 @@ class MainWindow(QMainWindow):
                 self.plot_frame.add_marker(max_index, max_value, color='#0000FF')
                 self.plot_frame.add_marker(min_index, min_value, color='#FF8C00')
 
-
                 difference = max_value - min_value
                 self.max_automate.setText(f"{max_value:.3f}")
                 self.min_automate.setText(f"{min_value:.3f}")
                 self.total_automate.setText(f"{difference:.3f}")
+
+                self.automateMaxValue.append(max_value)
+                self.automateMinValue.append(min_value)
+                self.automateTotalDifference.append(difference)
 
             except Exception as e:
                 QMessageBox.warning(self, "Error", f"Failed to calculate markers:\n{str(e)}")
@@ -139,11 +175,13 @@ class MainWindow(QMainWindow):
         difference = self.totdiffvalue.text()
 
         try:
-            latitude = float(lat_text)
-            longitude = float(long_text)
-            max_h = float(max_height)
-            min_h = float(min_height)
-            diff = float(difference)
+            if self.automate_activated is False:
+                latitude = float(lat_text)
+                longitude = float(long_text)
+                max_h = float(max_height)
+                min_h = float(min_height)
+                diff = float(difference)
+
         except ValueError:
             QMessageBox.warning(self, "Invalid Values", "Please make sure all values are filled in and numeric.")
             return
@@ -155,11 +193,21 @@ class MainWindow(QMainWindow):
         try:
             with open(save_path, mode='a', newline='') as file:
                 writer = csv.writer(file)
+            
                 if write_header:
                     writer.writerow(["Latitude", "Longitude", "MaxHeight", "MinHeight", "Difference"])
-                writer.writerow([latitude, longitude, max_h, min_h, diff])
+
+                if self.automate_activated:
+                    rows = zip(self.automateLat, self.automateLong, self.automateMaxValue, self.automateMinValue, self.automateTotalDifference)
+
+                    for row in rows:
+                        writer.writerow(row)
+                                    
+                else:
+                    writer.writerow([latitude, longitude, max_h, min_h, diff])
 
             QMessageBox.information(self, "Saved", "Data saved successfully!")
+        
         except Exception as e:
             QMessageBox.critical(self, "Save Error", f"Could not save data:\n{str(e)}")
 
@@ -229,6 +277,7 @@ class MainWindow(QMainWindow):
             try:
                 self.reset_labels()
                 self.get_row(self.current_row)
+                self.progressBar.setValue(0)
 
                 if self.automate_activated:
                     self.start_line_edit.clear()
@@ -239,6 +288,10 @@ class MainWindow(QMainWindow):
                     self.max_automate.clear()
                     self.min_automate.clear()
                     self.total_automate.clear()
+                    self.automateLat = []
+                    self.automateLong = []
+                    self.automateMaxValue = []
+                    self.automateMinValue = []
             except ValueError:
                 QMessageBox.warning(self, "Invalid Input", "Please enter a valid row number.")
 
@@ -247,6 +300,7 @@ class MainWindow(QMainWindow):
             try:
                 self.reset_labels()
                 self.reset_current_row()
+                self.progressBar.setValue(0)
             except:
                 QMessageBox.warning(self, "Invalid Input", "Failed to reset to the first row.")
 
@@ -264,13 +318,42 @@ class MainWindow(QMainWindow):
             row_data_filtered = row_data[fields]  
             self.plot_frame.plot_csv(row_data_filtered)
 
+            progress = int((row_index + 1) / len(self.df) * 100)
+            self.progressBar.setValue(progress)
+
 
           
             if self.automate_activated is not False:
+                self.automateLat.append(latitude)
+                self.automateLong.append(longitude)
                 self.calculate_automate_markers(row_index, self.scanning_point_start, self.scanning_point_end)
         
             if self.y_data_1 is not None or self.y_data_2 is not None:
-                self.reset_plot()
+                self.maximumheightbtn.setStyleSheet("""
+                    QPushButton {
+                        background-color: rgb(94, 92, 100);
+                    }
+                    QPushButton:hover {
+                        background-color: rgb(53, 132, 228);
+                    }
+                """)
+                self.minimumheightbtn.setStyleSheet("""
+                    QPushButton {
+                        background-color: rgb(94, 92, 100);
+                    }
+                    QPushButton:hover {
+                        background-color: rgb(198, 70, 0);
+                    }
+                """)
+  
+                self.first_click = None
+                self.second_click = None
+                self.y_data_1 = None
+                self.y_data_2 = None
+                self.totdiffvalue.clear()
+                self.maxheightvalue.clear()
+                self.minheightvalue.clear()
+                self.rowinput.clear()
 
             if row_index == 0:
                 self.setup_map(latitude, longitude)  
